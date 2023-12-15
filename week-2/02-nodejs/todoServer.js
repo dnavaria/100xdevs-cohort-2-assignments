@@ -39,11 +39,118 @@
 
   Testing the server - run `npm run test-todoServer` command in terminal
  */
-  const express = require('express');
-  const bodyParser = require('body-parser');
-  
-  const app = express();
-  
-  app.use(bodyParser.json());
-  
-  module.exports = app;
+const express = require("express");
+const bodyParser = require("body-parser");
+const fs = require("node:fs/promises");
+const { rmSync } = require("node:fs");
+
+const TODOS_DB = "todos.json";
+
+const app = express();
+
+app.use(bodyParser.json());
+
+app.get("/", (req, res) => {
+  res.json({
+    message: "Todo API Server",
+    exception: null,
+  });
+});
+
+app.get("/todos", async (req, res) => {
+  try {
+    const todoData = await fs.readFile(TODOS_DB, "utf-8");
+    res.json({
+      todos: JSON.parse(todoData),
+      exception: null,
+      message: "Todo list",
+    });
+  } catch (error) {
+    res.status(500).json({
+      todos: [],
+      exception: error,
+      message: "Todo list not found",
+    });
+  }
+});
+
+app.post("/todos", async (req, res) => {
+  try {
+    let todoData = await fs.readFile(TODOS_DB, "utf-8");
+    todoData = JSON.parse(todoData);
+
+    let body = req.body;
+
+    const todo = {
+      id: todoData.length + 1,
+      title: body.title,
+      description: body.description,
+    };
+
+    todoData.push(todo);
+
+    await fs.writeFile(TODOS_DB, JSON.stringify(todoData));
+
+    res.json({ exception: null, message: "Todo created" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ exception: error, message: "Failed to add Todo" });
+  }
+});
+
+app.get("/todo/:id", async (req, res) => {
+  try {
+    let todoData = await fs.readFile(TODOS_DB, "utf-8");
+    todoData = JSON.parse(todoData);
+    const todo = todoData.filter((value) => {
+      return value.id == req.params.id;
+    });
+    if (todo.length == 0) {
+      res.status(404).json({ todo: null, exception: null, message: "Todo not found" });
+    }
+    res.json({ todo: todo, exception: null, message: "Todo found" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ exception: error, todo: null, message: "Todo not found" });
+  }
+});
+
+app.put("/todo/:id", async (req, res) => {
+  try {
+    let todoData = await fs.readFile(TODOS_DB, "utf-8");
+    todoData = JSON.parse(todoData);
+    for (let i = 0; i < todoData.length; i++) {
+      if (todoData[i].id == req.params.id) {
+        todoData[i].title = req.body.title;
+        todoData[i].description = req.body.description;
+      }
+    }
+    await fs.writeFile(TODOS_DB, JSON.stringify(todoData));
+    res.json({ exception: null, message: "Todo updated" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ exception: error, message: "Failed to update Todo" });
+  }
+});
+
+app.delete("/todo/:id", async (req, res) => {
+  try {
+    const todoData = await fs.readFile(TODOS_DB, "utf-8");
+    const todo = JSON.parse(todoData);
+    const newTodo = todo.filter((value) => {
+      return value.id != req.params.id;
+    });
+    await fs.writeFile(TODOS_DB, JSON.stringify(newTodo));
+    res.json({ exception: null, message: "Todo deleted" });
+  } catch (error) {
+    res.status(500).json({ exception: error, message: "Failed to delete Todo" });
+  }
+});
+
+app.listen(9999, () => {
+  console.log("Todo Server running..");
+});
+
+module.exports = app;
