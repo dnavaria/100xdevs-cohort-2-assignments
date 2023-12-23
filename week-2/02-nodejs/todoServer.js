@@ -42,7 +42,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const fs = require("node:fs/promises");
-const { rmSync } = require("node:fs");
 
 const TODOS_DB = "todos.json";
 
