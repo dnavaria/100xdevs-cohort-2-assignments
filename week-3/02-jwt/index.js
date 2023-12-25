@@ -7,14 +7,17 @@ const jwtPassword = 'secret';
  *
  * @param {string} username - The username to be included in the JWT payload.
  *                            Must be a valid email address.
- * @param {string} password - The password to be included in the JWT payload.
- *                            Should meet the defined length requirement (e.g., 6 characters).
  * @returns {string|null} A JWT string if the username and password are valid.
  *                        Returns null if the username is not a valid email or
  *                        the password does not meet the length requirement.
  */
-function signJwt(username, password) {
-    // Your code here
+function signJwt(username) {
+    if (username) {
+        const token = jwt.sign({ username: username }, jwtPassword);
+        return token;
+    } else {
+        return null;
+    }
 }
 
 /**
@@ -26,7 +29,12 @@ function signJwt(username, password) {
  *                    using the secret key.
  */
 function verifyJwt(token) {
-    // Your code here
+    try {
+        const decoded = jwt.verify(token, jwtPassword);
+        return true;
+    } catch (err) {
+        return false;
+    }
 }
 
 /**
@@ -37,13 +45,18 @@ function verifyJwt(token) {
  *                         Returns false if the token is not a valid JWT format.
  */
 function decodeJwt(token) {
-    // Your code here
+    try {
+        const decoded = jwt.decode(token);
+        return decoded;
+    } catch (err) {
+        return false;
+    }
 }
 
 
 module.exports = {
-  signJwt,
-  verifyJwt,
-  decodeJwt,
-  jwtPassword,
+    signJwt,
+    verifyJwt,
+    decodeJwt,
+    jwtPassword,
 };
